@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LOCKE PROTOCOL</title>
+<style>
+:root{--bg:#07090d;--crt:#04130a;--g:#38ff8a;--g2:#1fbf62;--amber:#ffb62e;--mag:#ff4fd8;--cy:#35e6ff;--dim:#0d6b39;--gold:#ffd24a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--g);font-family:"Lucida Console","Courier New",monospace;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%}
+#hud{display:flex;align-items:center;gap:14px;padding:6px 14px;background:linear-gradient(90deg,#1a0b2e,#0b2b3a);border-bottom:2px solid var(--mag);font-size:13px;letter-spacing:1px}
+#hud b{color:var(--cy)}
+#hud .t{margin-left:auto;color:var(--amber)}
+#hud button{background:#120a24;border:1px solid var(--cy);color:var(--cy);font:inherit;padding:2px 8px;cursor:pointer}
+main{flex:1;display:flex;min-height:0}
+#side{width:270px;min-width:230px;background:#0a0f18;border-right:2px solid #1b2a3d;padding:10px;overflow:auto;font-size:12px}
+#side h3{margin:8px 0 6px;color:var(--mag);font-size:12px;letter-spacing:2px}
+#portraits{display:flex;gap:4px;flex-wrap:wrap}
+.pc{width:60px;text-align:center;font-size:10px;color:var(--cy)}
+.pc svg{width:60px;height:75px;background:#101a2a;border:1px solid #243650}
+#obj li{margin:4px 0;list-style:none;color:#9bd3b0}
+#obj li.done{color:var(--g);text-decoration:line-through;opacity:.7}
+#obj li:before{content:"[ ] ";color:var(--amber)}
+#obj li.done:before{content:"[x] "}
+#crtwrap{flex:1;padding:14px;display:flex;min-width:0}
+#crt{position:relative;flex:1;background:var(--crt);border:10px solid #2a2a35;border-radius:18px;box-shadow:0 0 0 3px #4a4a58,0 0 40px rgba(56,255,138,.18) inset;overflow:hidden;display:flex;flex-direction:column}
+#crt:after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.55));animation:fl 4s infinite}
+@keyframes fl{0%,100%{opacity:.95}50%{opacity:1}}
+#term{flex:1;overflow-y:auto;padding:12px 14px;font-size:15px;line-height:1.35;white-space:pre-wrap;word-break:break-word;text-shadow:0 0 6px rgba(56,255,138,.55)}
+#term .o{color:#bff5d3}
+#term .e{color:#ff6b6b}
+#term .w{color:var(--amber)}
+#term .c{color:var(--cy)}
+#term .m{color:var(--mag)}
+#term .b{color:#6fa88a}
+#term .pr1{color:#4aa8ff}
+#term .pr2{color:#4aa8ff}
+#term .u{color:#ff5d5d}
+#line{display:flex;align-items:flex-start;padding:0 14px 12px;font-size:15px}
+#promptline{white-space:pre;text-shadow:0 0 6px rgba(56,255,138,.55)}
+#inp{flex:1;background:transparent;border:0;outline:0;color:#e6fff0;font:inherit;caret-color:var(--g);margin-left:6px;min-width:20px}
+#scene,#finale,#title{position:fixed;inset:0;display:none;z-index:20}
+#scene{background:rgba(2,3,8,.96);align-items:center;justify-content:center}
+#scene.on,#finale.on,#title.on{display:flex}
+#sbox{width:min(860px,94vw);border:3px solid var(--mag);background:#0a0716;box-shadow:0 0 30px rgba(255,79,216,.25);padding:20px}
+#shead{color:var(--amber);letter-spacing:2px;font-size:13px;margin-bottom:12px}
+#srow{display:flex;gap:16px;align-items:flex-start}
+#sport{width:90px;flex:none}
+#sport svg{width:90px;height:112px;background:#101a2a;border:1px solid #243650}
+#stext{font-size:17px;line-height:1.5;min-height:120px;color:#f0e9ff}
+#stext .who{color:var(--cy);display:block;letter-spacing:2px;font-size:13px}
+#shint{margin-top:12px;color:#7d7aa0;font-size:12px;text-align:right}
+#finale{background:#000;flex-direction:column}
+#fcv{flex:1;width:100%;display:block}
+#fsub{position:absolute;left:0;right:0;bottom:6%;text-align:center;color:#fff3c4;font-size:22px;text-shadow:0 0 12px #000,0 0 6px #b8860b;padding:0 8%}
+#title{background:radial-gradient(ellipse at top,#2a0e45,#05060c 70%);flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#title h1{font-size:clamp(34px,8vw,84px);letter-spacing:8px;margin:0;color:var(--cy);text-shadow:3px 3px 0 var(--mag),0 0 24px var(--cy)}
+#title p{color:#cbb8ff;max-width:640px;line-height:1.6}
+#title button{margin-top:18px;background:var(--mag);color:#12001a;border:0;font:700 18px "Lucida Console",monospace;padding:12px 26px;cursor:pointer;letter-spacing:3px}
+.sm{font-size:12px;color:#8a85b5}
+@media(max-width:760px){#side{display:none}#crtwrap{padding:6px}#crt{border-width:6px}#term,#line{font-size:13px}}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="hud"><span><b>LOCKE PROTOCOL</b></span><span id="stg">STAGE 1/5</span><span class="t" id="clock">Tue 14 Oct 1997 23:41</span><button id="mbtn">SOUND: ON</button><button id="hbtn">HINT</button></div>
+ <main>
+  <aside id="side">
+   <h3>THE CREW</h3><div id="portraits"></div>
+   <h3>OBJECTIVES</h3><ul id="obj" style="padding:0;margin:0"></ul>
+   <h3>HOW TO PLAY</h3>
+   <div class="sm">This is a real command-line. Type the real commands, like <span style="color:var(--g)">sudo apt update</span>. Tab completes. Up arrow repeats. <span style="color:var(--g)">help</span> lists commands, <span style="color:var(--g)">hint</span> nudges you. Everything in this game is a fictional simulation. Nothing real is touched.</div>
+  </aside>
+  <div id="crtwrap"><div id="crt">
+    <div id="term"></div>
+    <div id="line"><span id="promptline"></span><input id="inp" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+  </div></div>
+ </main>
+</div>
+<div id="title" class="on"><h1>LOCKE PROTOCOL</h1><p>1997. A dead-end basement lab. A server that remembers what its owner forgot.<br>Type real Linux commands. Break in. Remember.</p><button id="go">PRESS START</button><p class="sm">Keyboard needed. Best on a computer.</p></div>
+<div id="scene"><div id="sbox"><div id="shead"></div><div id="srow"><div id="sport"></div><div id="stext"></div></div><div id="shint">[ENTER] or click to continue</div></div></div>
+<div id="finale"><canvas id="fcv"></canvas><div id="fsub"></div></div>
+
+<script>
+"use strict";
+/* ============ helpers ============ */
+const $=s=>document.querySelector(s);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const term=$('#term'), inp=$('#inp'), promptEl=$('#promptline');
+let audioOn=true, ac=null;
+function click(){ if(!audioOn)return; try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); const o=ac.createOscillator(), g=ac.createGain(); o.type='square'; o.frequency.value=380+Math.random()*80; g.gain.value=.015; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+.03);}catch(e){} }
+function out(t,c='o'){ const d=document.createElement('div'); d.className=c; d.textContent=t; term.appendChild(d); term.scrollTop=term.scrollHeight; return d; }
+function outHTML(h){ const d=document.createElement('div'); d.innerHTML=h; term.appendChild(d); term.scrollTop=term.scrollHeight; }
+async function lines(arr,delay=40,c='o'){ for(const l of arr){ out(l,c); await sleep(delay);} }
+
+/* ============ state ============ */
+let stage=0, busy=true, hist=[], hi=-1, pending=null, sudoOK=false;
+const installed=new Set(['coreutils']);
+const flags={};
+let ctx={host:'local',user:'locke',cwd:'/home/locke'};
+const GOLD="gold"; // sudo password
+const CRACKED="kestrel"; // msteele password
+const GPGPASS="the-world-is-round";
+
+/* ============ file systems ============ */
+const F=(t)=>({f:1,t}); const D=(c)=>({d:1,c});
+const local=D({
+ home:D({locke:D({
+  'README.txt':F(`LOCKE - read this first.
+
+If you're reading this, the machine is yours again.
+sudo password is: gold
+
+Malcolm Steele walked out of Parker Datalink with something of mine.
+I can't remember what. Only that it matters. Only that he wants it back.
+Everything points at his box on the 10.13.37.0/24 network.
+
+Keep the system patched before you touch anything. Sloppy ops get you caught.
+ - L.`),
+  notes:D({'steele.txt':F(`STEELE - what we know
+ - runs a vault server somewhere on 10.13.37.0/24
+ - backs things up to a public web folder (he never changes defaults)
+ - uses the same password style for everything: a bird, lowercase
+ - the file named LOCKE_PROTOCOL.enc will not open without his key
+ - Elara thinks the key is stored with a note about the shape of the world`)}),
+  'LOCKE_PROTOCOL.enc':F('[ENCRYPTED - 4096 bytes - locked]'),
+  tools:D({})
+ })}),
+ etc:D({hosts:F('127.0.0.1 localhost\n127.0.1.1 parkerdl\n10.13.37.1 gw.local\n'),'os-release':F('PRETTY_NAME="Kali GNU/Linux Rolling"\nNAME="Kali GNU/Linux"\n')}),
+ usr:D({share:D({wordlists:D({'rockyou.txt':F('123456\npassword\nletmein\nswordfish\nkestrel\nfirewall\nzerocool\nacidburn\n(+14,344,384 more lines)')})})}),
+ tmp:D({})
+});
+const vault=D({
+ home:D({msteele:D({
+  '.bash_history':F(`ls
+cd /var/log/vault
+tail access.log
+echo "hide the key where a smart guy looks last" > /dev/null
+base64 key.b64
+gpg --symmetric locke_memory.txt
+rm locke_memory.txt
+exit`),
+  'key.b64':F('dGhlLXdvcmxkLWlzLXJvdW5k'),
+  'locke_memory.gpg':F('[GPG ENCRYPTED DATA - symmetric - passphrase required]'),
+  'todo.txt':F('- change default passwords (again)\n- back up vault to /backup (done, oops)\n- do NOT let Locke see the memory file')
+ })}),
+ var:D({log:D({vault:D({'access.log':F(`1997-10-14 02:11 sshd: accepted password for msteele from 10.13.37.5
+1997-10-14 02:13 vaultd: archive "locke_memory" created (owner: msteele)
+1997-10-14 02:13 vaultd: NOTE locke asked about the memory. refused.
+1997-10-14 02:41 vaultd: LOCKE_PROTOCOL staged, waiting on key
+1997-10-14 03:05 sshd: session closed for msteele`)})})}),
+ etc:D({hostname:F('vault')})
+});
+const FS={local,steele:vault};
+function node(host,path){ const parts=path.split('/').filter(Boolean); let n=FS[host]; for(const p of parts){ if(!n||!n.d||!n.c[p]) return null; n=n.c[p]; } return n; }
+function resolve(p){ if(!p) return ctx.cwd; if(p==='~') p=ctx.host==='local'?'/home/locke':'/home/msteele'; else if(p.startsWith('~/')) p=(ctx.host==='local'?'/home/locke':'/home/msteele')+p.slice(1); let full=p.startsWith('/')?p:ctx.cwd+'/'+p; const st=[]; for(const s of full.split('/')){ if(!s||s==='.')continue; if(s==='..')st.pop(); else st.push(s);} return '/'+st.join('/'); }
+function home(){ return ctx.host==='local'?'/home/locke':'/home/msteele'; }
+function pathLabel(){ return ctx.cwd===home()?'~':(ctx.cwd.startsWith(home()+'/')?'~'+ctx.cwd.slice(home().length):ctx.cwd); }
+
+/* ============ stage data ============ */
+const STAGES=[
+ {name:'COLD BOOT',obj:[['update','Update the package lists'],['upgrade','Upgrade the system'],['readme','Read the README'],['steele','Read the notes on Steele']],
+  hint:{update:'Patch first: sudo apt update',upgrade:'Then: sudo apt upgrade -y',readme:'Look around with ls, then cat README.txt',steele:'cd notes, then cat steele.txt (or cat notes/steele.txt)'}},
+ {name:'RECON',obj:[['nmapinst','Install nmap'],['sweep','Find live hosts on 10.13.37.0/24'],['svc','Probe the vault host for services'],['curl','Read the vault web page']],
+  hint:{nmapinst:'sudo apt install nmap -y',sweep:'nmap -sn 10.13.37.0/24',svc:'nmap -sV 10.13.37.42',curl:'curl http://10.13.37.42'}},
+ {name:'ENTRY',obj:[['wget','Grab the exposed backup file'],['johninst','Install john the ripper'],['crack','Crack the password hash'],['ssh','SSH into the vault']],
+  hint:{wget:'wget http://10.13.37.42/backup/shadow.bak',johninst:'sudo apt install john -y',crack:'john --wordlist=/usr/share/wordlists/rockyou.txt shadow.bak',ssh:'ssh msteele@10.13.37.42  (the password is the cracked one)'}},
+ {name:'INSIDE THE VAULT',obj:[['hist','Read Steele\'s shell history'],['grep','Search the logs for "locke"'],['b64','Decode the base64 key note'],['gpg','Decrypt the memory file'],['exit','Log out of the vault']],
+  hint:{hist:'cat .bash_history',grep:'grep -ri locke /var/log/vault',b64:'base64 -d key.b64   (try the file name from the history)',gpg:'gpg --decrypt locke_memory.gpg   (passphrase is what you decoded)',exit:'exit'}},
+ {name:'LOCKE_PROTOCOL',obj:[['unlock','Type the command on the screen']],hint:{unlock:'unlock'}}
+];
+const done={};
+function objDone(id){ done[id]=true; renderObj(); checkStage(); }
+function renderObj(){ const ul=$('#obj'); ul.innerHTML=''; STAGES[stage].obj.forEach(([id,txt])=>{ const li=document.createElement('li'); li.textContent=txt; if(done[id]) li.className='done'; ul.appendChild(li); }); $('#stg').textContent='STAGE '+(stage+1)+'/5 - '+STAGES[stage].name; }
+function nextHint(){ for(const [id] of STAGES[stage].obj){ if(!done[id]) return STAGES[stage].hint[id]; } return 'You\'re done here. Keep going.'; }
+let advancing=false;
+async function checkStage(){ if(advancing) return; if(!STAGES[stage].obj.every(([id])=>done[id])) return; if(stage>=3 && stage<4){ } advancing=true; busy=true; await sleep(900); await outro(stage); stage++; if(stage>=5){ return; } renderObj(); await intro(stage); advancing=false; busy=false; setPrompt(); inp.focus(); }
+
+/* ============ portraits (90s fashion) ============ */
+const SK={parker:'#e2b48c',locke:'#c88b63',elara:'#8d5a3b',steele:'#f0c6a0'};
+function portrait(w){
+ const sk=SK[w]||'#ddd';
+ const head=`<circle cx="40" cy="38" r="17" fill="${sk}"/>`;
+ let body='',extra='';
+ if(w==='parker'){ // flannel + beanie + pager
+  body=`<rect x="14" y="58" width="52" height="42" rx="6" fill="#a82a2a"/><path d="M14 66h52M14 76h52M14 86h52M26 58v42M40 58v42M54 58v42" stroke="#1a1a1a" stroke-width="3" opacity=".55"/><rect x="48" y="84" width="10" height="8" fill="#222"/><rect x="50" y="86" width="6" height="3" fill="#8fe"/>`;
+  extra=`<path d="M22 32a18 14 0 0 1 36 0v4H22z" fill="#2c3e8c"/><rect x="21" y="32" width="38" height="6" fill="#1d2a66"/><circle cx="34" cy="40" r="2" fill="#222"/><circle cx="46" cy="40" r="2" fill="#222"/><path d="M34 47q6 4 12 0" stroke="#5a2f1a" stroke-width="2" fill="none"/>`;
+ } else if(w==='locke'){ // black oversized jacket, round shades, bucket hat
+  body=`<path d="M8 100V66l16-8h32l16 8v34z" fill="#15151c"/><path d="M40 58v42" stroke="#444" stroke-width="2"/><rect x="26" y="62" width="10" height="5" fill="#35e6ff"/>`;
+  extra=`<path d="M20 30h40l-4-10H24z" fill="#3a3a48"/><rect x="16" y="29" width="48" height="5" rx="2" fill="#2a2a36"/><circle cx="33" cy="39" r="6" fill="#111" stroke="#35e6ff" stroke-width="1.5"/><circle cx="47" cy="39" r="6" fill="#111" stroke="#35e6ff" stroke-width="1.5"/><path d="M39 39h2" stroke="#35e6ff" stroke-width="1.5"/><path d="M34 49q6 3 12 0" stroke="#3a1f10" stroke-width="2" fill="none"/>`;
+ } else if(w==='elara'){ // overalls, butterfly clips, choker
+  body=`<rect x="18" y="58" width="44" height="42" rx="5" fill="#5b7fb8"/><rect x="24" y="52" width="6" height="14" fill="#5b7fb8"/><rect x="50" y="52" width="6" height="14" fill="#5b7fb8"/><rect x="26" y="64" width="28" height="22" fill="#6e92cc"/><rect x="18" y="58" width="44" height="6" fill="#ff7ad9" opacity=".0"/><rect x="12" y="58" width="14" height="22" fill="#ffd0ec"/><rect x="54" y="58" width="14" height="22" fill="#ffd0ec"/>`;
+  extra=`<path d="M22 36q0-20 18-20t18 20q-4-10-18-10t-18 10z" fill="#1c1017"/><path d="M22 36v18" stroke="#1c1017" stroke-width="5"/><path d="M58 36v18" stroke="#1c1017" stroke-width="5"/><path d="M26 25l6-4 0 8z M54 25l-6-4 0 8z" fill="#ff7ad9"/><rect x="31" y="51" width="18" height="3" rx="1.5" fill="#222"/><circle cx="34" cy="38" r="2" fill="#222"/><circle cx="46" cy="38" r="2" fill="#222"/><path d="M34 45q6 4 12 0" stroke="#4a1d12" stroke-width="2" fill="none"/>`;
+ } else { // steele: shoulder-pad power suit, slick hair, cell phone brick
+  body=`<path d="M4 100V70l12-12h48l12 12v30z" fill="#2a2e4a"/><path d="M40 58l-8 20h16z" fill="#e8e8f0"/><path d="M40 62v16" stroke="#a82a2a" stroke-width="3"/><rect x="58" y="78" width="9" height="17" rx="2" fill="#111"/><rect x="59.5" y="80" width="6" height="4" fill="#9fd"/>`;
+  extra=`<path d="M23 34q2-16 17-16t17 16q-6-8-17-8t-17 8z" fill="#22222a"/><path d="M30 39h7M43 39h7" stroke="#222" stroke-width="2.5"/><path d="M35 49h10" stroke="#5a2f1a" stroke-width="2"/>`;
+ }
+ return `<svg viewBox="0 0 80 100" xmlns="http://www.w3.org/2000/svg">${body}${head}${extra}</svg>`;
+}
+function renderPortraits(){ const p=$('#portraits'); p.innerHTML=''; [['parker','PARKER'],['locke','LOCKE'],['elara','ELARA'],['steele','STEELE']].forEach(([k,n])=>{ const d=document.createElement('div'); d.className='pc'; d.innerHTML=portrait(k)+'<div>'+n+'</div>'; p.appendChild(d); }); }
+
+/* ============ cutscenes ============ */
+const SCENES={
+ intro0:[['H','INT. PARKER DATALINK - MAIN ROOM - NIGHT  (Tuesday, October 14, 1997)'],
+  ['N','A basement lab. Posters, cables, a lava lamp, a stack of floppy disks. One modern machine hums in the middle of it all.'],
+  ['parker','PARKER','Elara, is that the last of the pizza?'],['elara','ELARA','It was never pizza. It was a science experiment.'],
+  ['locke','LOCKE','Steele took something from this room. I can feel the hole where it was. I just can\'t remember what.'],
+  ['parker','PARKER','Then we start with what we can control. Patch the box. Nothing gets in or out sloppy.'],
+  ['locke','LOCKE','README is on the desk. The password is in it.']],
+ outro0:[['locke','LOCKE','Steele keeps his vault on the 10.13.37 network.'],['elara','ELARA','He\'s sloppy about backups. He always has been.'],['parker','PARKER','Then we go looking. Quietly.']],
+ intro1:[['H','INT. PARKER DATALINK - MAIN ROOM - LATER'],
+  ['elara','ELARA','Before you scan anything, make sure the scanner is installed.'],['locke','LOCKE','Right. Find every machine on his network. Then find the one that matters.']],
+ outro1:[['parker','PARKER','A web server. With a directory listing.'],['elara','ELARA','He left a door open and called it a feature.'],['locke','LOCKE','Look at the page source. He left a comment too.']],
+ intro2:[['H','INT. PARKER DATALINK - MAIN ROOM - 2:07 AM'],
+  ['locke','LOCKE','A backup of his password file, in a public folder. Pull it down.'],['parker','PARKER','A hash isn\'t a password. We need to crack it.'],
+  ['elara','ELARA','His notes said he uses a bird. Lowercase. Try a wordlist.']],
+ outro2:[['elara','ELARA','A bird, like I said.'],['locke','LOCKE','Then we have a way in.'],['parker','PARKER','Quietly. In and out.']],
+ intro3:[['H','INT. STEELE VAULT - REMOTE SESSION'],
+  ['N','The prompt changes. It is not your machine anymore.'],['locke','LOCKE','Read his history. Search his logs. Everyone leaves a trail.']],
+ outro3:[['locke','LOCKE','The memory. He copied it. Me.'],['elara','ELARA','He locked it away so you couldn\'t find out.'],['parker','PARKER','Get out of there before he notices. Then finish this.']],
+ intro4:[['N','Back at Parker Datalink. The machine is quiet. Then, on its own:'],['H','INT. PARKER DATALINK - MAIN ROOM - NIGHT']]
+};
+let sceneResolve=null, sceneAdvance=null;
+async function playScene(list){
+ const sc=$('#scene'); sc.classList.add('on');
+ for(const l of list){
+  await new Promise(res=>{ sceneAdvance=res;
+   const head=$('#shead'), txt=$('#stext'), port=$('#sport');
+   if(l[0]==='H'){ head.textContent=l[1]; port.innerHTML=''; txt.textContent=''; setTimeout(res,1400); return; }
+   if(l[0]==='N'){ port.innerHTML=''; typeTo(txt,'',l[1],res); return; }
+   port.innerHTML=portrait(l[0]); typeTo(txt,l[1],l[2],res);
+  });
+ }
+ sc.classList.remove('on');
+}
+function typeTo(el,who,text,res){ el.innerHTML=(who?'<span class="who">'+who+'</span>':'')+'<span id="tt"></span>'; const tt=$('#tt'); let i=0; const iv=setInterval(()=>{ tt.textContent=text.slice(0,++i); if(i%3===0)click(); if(i>=text.length){ clearInterval(iv); sceneAdvance=()=>res(); } },22); sceneAdvance=()=>{ clearInterval(iv); tt.textContent=text; sceneAdvance=()=>res(); }; }
+$('#scene').addEventListener('click',()=>{ if(sceneAdvance) sceneAdvance(); });
+document.addEventListener('keydown',e=>{ if($('#scene').classList.contains('on') && (e.key==='Enter'||e.key===' ')){ e.preventDefault(); if(sceneAdvance) sceneAdvance(); } });
+
+async function intro(i){ renderObj(); const k='intro'+i; if(SCENES[k]) await playScene(SCENES[k]); if(i===0){ await bootBanner(); } else { out('--- STAGE '+(i+1)+': '+STAGES[i].name+' ---','m'); } if(i===4){ await stage5(); } }
+async function outro(i){ const k='outro'+i; if(SCENES[k]) await playScene(SCENES[k]); }
+async function bootBanner(){ out('Kali GNU/Linux Rolling parkerdl tty1','b'); out('Type "help" for commands. Type "hint" if you\'re stuck.','b'); out(''); }
+
+/* ============ prompt ============ */
+function setPrompt(){ if(ctx.host==='local'){ promptEl.innerHTML=''; promptEl.textContent='┌──(locke㒉parkerdl)-['+pathLabel()+']\n└─$'; } else { promptEl.textContent='msteele@vault:'+pathLabel()+'$'; } }
+function echoCmd(s){ const d=document.createElement('div'); d.className='o'; const pl=(ctx.host==='local'?'┌──(locke㒉parkerdl)-['+pathLabel()+']\n└─$ ':'msteele@vault:'+pathLabel()+'$ '); d.textContent=pl+s; term.appendChild(d); term.scrollTop=term.scrollHeight; }
+
+/* ============ command engine ============ */
+function tok(s){ const a=[]; const re=/"([^"]*)"|'([^']*)'|(\S+)/g; let m; while((m=re.exec(s))) a.push(m[1]!==undefined?m[1]:m[2]!==undefined?m[2]:m[3]); return a; }
+const LOCAL_ONLY=['apt','nmap','john','curl','wget','ssh','ping','sudo'];
+const CMDS=['help','hint','clear','ls','cd','cat','pwd','whoami','id','uname','date','echo','grep','find','base64','gpg','history','man','apt','sudo','nmap','john','curl','wget','ssh','ping','exit','head','tail','objectives'];
+
+async function run(line){
+ const parts=line.split(/\s*&&\s*/); for(const p of parts){ const ok=await runOne(p.trim()); if(ok===false) break; }
+}
+async function runOne(s){
+ if(!s) return true;
+ let a=tok(s); let cmd=a[0]; let args=a.slice(1);
+ if(cmd==='sudo'){ if(!args.length){ out('usage: sudo command','e'); return false; } if(ctx.host!=='local'){ out('msteele is not in the sudoers file. This incident will be reported.','e'); return false; } if(!sudoOK){ const ok=await askSudo(); if(!ok) return false; } cmd=args[0]; args=args.slice(1); return await exec(cmd,args,true,s); }
+ return await exec(cmd,args,false,s);
+}
+function askSudo(){ return new Promise(async res=>{ let tries=0; const ask=()=>{ pending={secret:true,prompt:'[sudo] password for locke: ',cb:async v=>{ if(v===GOLD){ sudoOK=true; res(true); } else { tries++; out('Sorry, try again.','e'); if(tries>=3){ out('sudo: 3 incorrect password attempts','e'); res(false);} else ask(); } }}; showPending(); }; ask(); }); }
+function showPending(){ promptEl.textContent=pending.prompt; inp.type=pending.secret?'password':'text'; inp.value=''; inp.focus(); }
+async function exec(cmd,args,isSudo,raw){
+ if(ctx.host==='steele' && LOCAL_ONLY.includes(cmd)){ out('-bash: '+cmd+': command not found','e'); return false; }
+ switch(cmd){
+  case 'help': out('Commands: ls cd cat pwd whoami id uname date echo grep find head tail base64 gpg history clear man\nTools: apt nmap john curl wget ssh ping exit\nGame: hint objectives\nTip: real Linux. sudo needs your password (it is in README.txt).','c'); return true;
+  case 'hint': out('HINT: '+nextHint(),'w'); return true;
+  case 'objectives': STAGES[stage].obj.forEach(([id,t])=>out((done[id]?'[x] ':'[ ] ')+t,'c')); return true;
+  case 'clear': term.innerHTML=''; return true;
+  case 'pwd': out(ctx.cwd); return true;
+  case 'whoami': out(ctx.user); return true;
+  case 'id': out(ctx.host==='local'?'uid=1000(locke) gid=1000(locke) groups=1000(locke),27(sudo)':'uid=1001(msteele) gid=1001(msteele) groups=1001(msteele)'); return true;
+  case 'uname': out(ctx.host==='local'?'Linux parkerdl 6.5.0-kali3-amd64 #1 SMP PREEMPT_DYNAMIC x86_64 GNU/Linux':'Linux vault 5.10.0-8-amd64 #1 SMP x86_64 GNU/Linux'); return true;
+  case 'date': out('Tue Oct 14 23:41:07 EDT 1997'); return true;
+  case 'echo': out(args.join(' ')); return true;
+  case 'history': hist.forEach((h,i)=>out((' '+(i+1)).slice(-4)+'  '+h)); return true;
+  case 'man': out('No manual entry for '+(args[0]||'nothing')+'. (Try: hint)','e'); return true;
+  case 'ls': return doLs(args);
+  case 'cd': { const t=resolve(args[0]||'~'); const n=node(ctx.host,t); if(!n){ out('cd: '+(args[0]||'')+': No such file or directory','e'); return false;} if(!n.d){ out('cd: '+args[0]+': Not a directory','e'); return false;} ctx.cwd=t; setPrompt(); return true; }
+  case 'cat': case 'head': case 'tail': return doCat(cmd,args);
+  case 'grep': return doGrep(args);
+  case 'find': out('find: use ls and cd to explore. (This is a small world.)','e'); return true;
+  case 'base64': return doB64(args);
+  case 'gpg': return await doGpg(args);
+  case 'apt': return await doApt(args,isSudo);
+  case 'nmap': return await doNmap(args);
+  case 'john': return await doJohn(args);
+  case 'curl': return await doCurl(args);
+  case 'wget': return await doWget(args);
+  case 'ping': return await doPing(args);
+  case 'ssh': return await doSsh(args);
+  case 'exit': case 'logout': return await doExit();
+  default: out(cmd+': command not found'+(ctx.host==='local'?'':''),'e'); return false;
+ }
+}
+function doLs(args){ const la=args.some(a=>/^-.*[la]/.test(a)); const tgt=args.find(a=>!a.startsWith('-')); const p=resolve(tgt); const n=node(ctx.host,p); if(!n){ out('ls: cannot access \''+(tgt||'')+'\': No such file or directory','e'); return false; } if(!n.d){ out(tgt); return true; } let names=Object.keys(n.c); if(!la) names=names.filter(x=>!x.startsWith('.')); else names=['.','..',...names]; if(!la){ out(names.map(x=>n.c[x]&&n.c[x].d?x+'/':x).join('  ')||''); return true; } names.forEach(x=>{ const c=n.c[x]; const isd=!c||c.d; out((isd?'drwxr-xr-x':'-rw-r--r--')+' 1 '+ctx.user+' '+ctx.user+' '+String(c&&c.t?c.t.length:4096).padStart(5)+' Oct 14 23:10 '+x,'o'); }); return true; }
+function doCat(cmd,args){ const files=args.filter(a=>!a.startsWith('-')); if(!files.length){ out(cmd+': missing file','e'); return false; } let ok=true; for(const f of files){ const p=resolve(f); const n=node(ctx.host,p); if(!n){ out(cmd+': '+f+': No such file or directory','e'); ok=false; continue; } if(n.d){ out(cmd+': '+f+': Is a directory','e'); ok=false; continue; } let t=n.t; if(cmd==='head') t=t.split('\n').slice(0,10).join('\n'); if(cmd==='tail') t=t.split('\n').slice(-10).join('\n'); out(t);
+   const base=p.split('/').pop();
+   if(ctx.host==='local'&&base==='README.txt') objDone('readme'); if(ctx.host==='local'&&base==='steele.txt') objDone('steele'); if(ctx.host==='steele'&&base==='.bash_history') objDone('hist'); }
+ return ok; }
+function doGrep(args){ const flags2=args.filter(a=>a.startsWith('-')); const rest=args.filter(a=>!a.startsWith('-')); const pat=rest[0]; const tgt=rest[1]; if(!pat||!tgt){ out('Usage: grep [OPTION]... PATTERN FILE','e'); return false; } const p=resolve(tgt); const n=node(ctx.host,p); if(!n){ out('grep: '+tgt+': No such file or directory','e'); return false; } const re=new RegExp(pat,flags2.some(f=>f.includes('i'))?'i':''); const collect=(nd,path)=>{ if(nd.d){ if(!flags2.some(f=>f.includes('r'))){ out('grep: '+tgt+': Is a directory','e'); return; } for(const k of Object.keys(nd.c)) collect(nd.c[k],path+'/'+k); } else { nd.t.split('\n').forEach(l=>{ if(re.test(l)) out((flags2.some(f=>f.includes('r'))?path+':':'')+l); }); } }; collect(n,p); if(ctx.host==='steele'&&/vault/.test(p)&&re.test('locke')) objDone('grep'); return true; }
+function doB64(args){ const d=args.some(a=>a==='-d'||a==='--decode'); const f=args.find(a=>!a.startsWith('-')); if(!f){ out('base64: missing file operand','e'); return false; } const n=node(ctx.host,resolve(f)); if(!n||n.d){ out('base64: '+f+': No such file or directory','e'); return false; } try{ out(d?atob(n.t.trim()):btoa(n.t)); if(d&&ctx.host==='steele'&&/key\.b64$/.test(f)){ objDone('b64'); out('(that looks like a passphrase...)','b'); } }catch(e){ out('base64: invalid input','e'); } return true; }
+async function doGpg(args){ if(ctx.host!=='steele'){ out('gpg: nothing to decrypt here.','e'); return false; } const f=args.find(a=>!a.startsWith('-')); if(!(args.includes('-d')||args.includes('--decrypt'))||!f){ out('usage: gpg --decrypt FILE','e'); return false; } const n=node(ctx.host,resolve(f)); if(!n||!/gpg$/.test(f)){ out('gpg: '+f+': No such file or directory','e'); return false; } return await new Promise(res=>{ let tries=0; const ask=()=>{ pending={secret:true,prompt:'gpg: AES256.CFB encrypted data\nEnter passphrase: ',cb:async v=>{ if(v===GPGPASS){ await lines(['gpg: AES256.CFB encrypted data','gpg: encrypted with 1 passphrase','','LOCKE MEMORY - SEALED BY M. STEELE','Subject: Locke, A.','They are all in here: the promise he broke, the courage he forgot.','I took them because the system should not remember what a man chooses to forget.','I was wrong. The key is the shape of the world.','','>>> locke_key.bin extracted. LOCKE_PROTOCOL staged on parkerdl. <<<'],60,'m'); objDone('gpg'); res(true);} else { tries++; out('gpg: decryption failed: Bad session key','e'); if(tries>=3) res(false); else ask(); } }}; showPending(); }; ask(); }); }
+async function doApt(args,isSudo){ if(!isSudo){ out('E: Could not open lock file /var/lib/dpkg/lock-frontend - open (13: Permission denied)\nE: Unable to acquire the dpkg frontend lock, are you root? (try: sudo)','e'); return false; }
+ const sub=args[0]; const yes=args.includes('-y')||args.includes('--yes');
+ if(sub==='update'){ await lines(['Get:1 http://http.kali.org/kali kali-rolling InRelease [41.5 kB]','Get:2 http://http.kali.org/kali kali-rolling/main amd64 Packages [20.3 MB]','Get:3 http://http.kali.org/kali kali-rolling/contrib amd64 Packages [111 kB]','Get:4 http://http.kali.org/kali kali-rolling/non-free amd64 Packages [191 kB]','Fetched 20.7 MB in 4s (5,170 kB/s)','Reading package lists... Done','Building dependency tree... Done','Reading state information... Done','142 packages can be upgraded. Run \'apt list --upgradable\' to see them.'],220); objDone('update'); return true; }
+ if(sub==='upgrade'||sub==='full-upgrade'||sub==='dist-upgrade'){ if(!done.update){ out('Reading package lists... Done\nBuilding dependency tree... Done\n0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.\n(Tip: run sudo apt update first.)','w'); return false; }
+  await lines(['Reading package lists... Done','Building dependency tree... Done','Reading state information... Done','Calculating upgrade... Done','The following packages will be upgraded:','  base-files bash libc6 openssh-client openssh-server linux-image-amd64 ... (142 total)','142 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.','Need to get 412 MB of archives.'],120);
+  if(!yes){ const ok=await askYN('Do you want to continue? [Y/n] '); if(!ok){ out('Abort.'); return false; } }
+  await lines(['Get:1 http://http.kali.org/kali kali-rolling/main amd64 libc6 amd64 2.38-3 [2,813 kB]','Get:2 http://http.kali.org/kali kali-rolling/main amd64 bash amd64 5.2.15-2 [1,452 kB]','Fetched 412 MB in 41s (10.0 MB/s)','Preparing to unpack .../libc6_2.38-3_amd64.deb ...','Unpacking libc6:amd64 (2.38-3) over (2.36-9) ...','Setting up libc6:amd64 (2.38-3) ...','Setting up bash (5.2.15-2) ...','Processing triggers for man-db (2.11.2-2) ...','Processing triggers for libc-bin (2.38-3) ...'],160); objDone('upgrade'); return true; }
+ if(sub==='install'){ const pk=args.slice(1).filter(a=>!a.startsWith('-')); if(!pk.length){ out('E: No packages specified','e'); return false; } const known={nmap:'nmap',john:'john'}; for(const p of pk){ if(!known[p]){ out('E: Unable to locate package '+p,'e'); return false; } }
+  await lines(['Reading package lists... Done','Building dependency tree... Done','Reading state information... Done','The following NEW packages will be installed:','  '+pk.join(' '),'0 upgraded, '+pk.length+' newly installed, 0 to remove and 0 not upgraded.'],120);
+  if(!yes){ const ok=await askYN('Do you want to continue? [Y/n] '); if(!ok){ out('Abort.'); return false; } }
+  for(const p of pk){ await lines(['Selecting previously unselected package '+p+'.','Unpacking '+p+' ...','Setting up '+p+' ...'],220); installed.add(p); if(p==='nmap') objDone('nmapinst'); if(p==='john') objDone('johninst'); } return true; }
+ out('E: Invalid operation '+(sub||''),'e'); return false; }
+function askYN(p){ return new Promise(res=>{ pending={secret:false,prompt:p,cb:async v=>{ res(/^(y|yes|)$/i.test(v.trim())); }}; showPending(); }); }
+async function doNmap(args){ if(!installed.has('nmap')){ out('Command \'nmap\' not found, but can be installed with:\nsudo apt install nmap','e'); return false; }
+ const tgt=args.find(a=>/^\d/.test(a)); if(!tgt){ out('Usage: nmap [Scan Type(s)] [Options] {target specification}','e'); return false; }
+ if(args.includes('-sn')&&/10\.13\.37\.0\/24/.test(tgt)){ await lines(['Starting Nmap 7.94 ( https://nmap.org ) at 1997-10-14 23:47 EDT','Nmap scan report for gw.local (10.13.37.1)','Host is up (0.0011s latency).','Nmap scan report for 10.13.37.20','Host is up (0.0030s latency).','Nmap scan report for vault.local (10.13.37.42)','Host is up (0.0021s latency).','Nmap done: 256 IP addresses (3 hosts up) scanned in 2.91 seconds','','(the vault.local box is the one with Steele\'s name on it)'],220); objDone('sweep'); return true; }
+ if(tgt==='10.13.37.42'&&args.some(a=>/sV|sC|A|p/.test(a))){ await lines(['Starting Nmap 7.94 ( https://nmap.org ) at 1997-10-14 23:49 EDT','Nmap scan report for vault.local (10.13.37.42)','Host is up (0.0021s latency).','Not shown: 997 closed tcp ports (reset)','PORT     STATE SERVICE VERSION','22/tcp   open  ssh     OpenSSH 8.4p1 Debian 5 (protocol 2.0)','80/tcp   open  http    Apache httpd 2.4.57 ((Debian))','8080/tcp open  http-proxy  (filtered)','Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel','Service detection performed. Please report any incorrect results.','Nmap done: 1 IP address (1 host up) scanned in 7.41 seconds'],220); objDone('svc'); return true; }
+ if(/^10\.13\.37\./.test(tgt)){ await lines(['Starting Nmap 7.94 ( https://nmap.org )','Nmap done: 1 IP address (1 host up) scanned in 1.2 seconds','(hint: try -sn on the /24 first, then -sV on the vault host)'],150,'w'); return true; }
+ out('Note: Host seems down.','e'); return false; }
+async function doCurl(args){ if(ctx.host!=='local'){ return false; } const u=args.find(a=>/^https?:/.test(a)); if(u&&/10\.13\.37\.42\/?$/.test(u)){ await lines(['<html><head><title>Steele Vault - Private Archive</title></head>','<body>','<h1>Steele Vault</h1>','<p>Authorized personnel only.</p>','<!-- TODO: old backups still in /backup/ - clean up before Friday -->','</body></html>'],140); objDone('curl'); return true; } if(u&&/\/backup\/?$/.test(u)){ out('<h1>Index of /backup</h1>\nshadow.bak   1997-10-12   1.1K','o'); return true; } out('curl: (7) Failed to connect','e'); return false; }
+async function doWget(args){ const u=args.find(a=>/^https?:/.test(a)); if(u&&/10\.13\.37\.42\/backup\/shadow\.bak$/.test(u)){ await lines(['--1997-10-14 23:55:12--  '+u,'Connecting to 10.13.37.42:80... connected.','HTTP request sent, awaiting response... 200 OK','Length: 1126 (1.1K) [application/octet-stream]','Saving to: \'shadow.bak\'','','shadow.bak         100%[===================>]   1.10K  --.-KB/s    in 0s','','1997-10-14 23:55:12 (4.2 MB/s) - \'shadow.bak\' saved [1126/1126]'],160); const dir=node('local',ctx.cwd); if(dir&&dir.d){ dir.c['shadow.bak']=F('msteele:$6$Qx9Lw1zT$kF2s9lA0bq3D7v0uRrYhJp1ZgcVt0bW9Yz5JmKjH7e1oY2n3xT4uL8vQ9aM6sN0dZ.e/RkH2a8cP1uX3vYq/:10234:0:99999:7:::'); } objDone('wget'); return true; } out('wget: unable to resolve host or file not found','e'); return false; }
+async function doJohn(args){ if(!installed.has('john')){ out('Command \'john\' not found, but can be installed with:\nsudo apt install john','e'); return false; }
+ const f=args.find(a=>!a.startsWith('-')&&!a.includes('=')); const n=f&&node('local',resolve(f)); if(args.includes('--show')){ if(n&&!n.d&&flags.cracked){ out('msteele:'+CRACKED+':10234:0:99999:7:::\n\n1 password hash cracked, 0 left'); return true; } out('0 password hashes cracked, 1 left','e'); return true; }
+ if(!n||n.d){ out('john: '+(f||'')+': No such file or directory','e'); return false; }
+ if(!/rockyou/.test(args.join(' '))){ await lines(['Using default input encoding: UTF-8','Loaded 1 password hash (sha512crypt, crypt(3) $6$ [SHA512 256/256 AVX2 4x])','Press \'q\' or Ctrl-C to abort','Session aborted (try --wordlist=/usr/share/wordlists/rockyou.txt)'],200,'w'); return true; }
+ await lines(['Using default input encoding: UTF-8','Loaded 1 password hash (sha512crypt, crypt(3) $6$ [SHA512 256/256 AVX2 4x])','Cost 1 (iteration count) is 5000 for all loaded hashes','Will run 4 OpenMP threads','Press \'q\' or Ctrl-C to abort, almost any other key for status'],220); await sleep(900); out(CRACKED+'          (msteele)','m'); await lines(['1g 0:00:00:03 DONE (1997-10-14 23:59) 0.2915g/s 1021p/s 1021c/s 1021C/s kestrel','Use the "--show" option to display all of the cracked passwords reliably','Session completed.'],200); flags.cracked=true; objDone('crack'); return true; }
+async function doPing(args){ const t=args.find(a=>!a.startsWith('-'))||''; if(/10\.13\.37\.(1|20|42)$/.test(t)||/vault|gw/.test(t)){ await lines(['PING '+t+' 56(84) bytes of data.','64 bytes from '+t+': icmp_seq=1 ttl=64 time=1.12 ms','64 bytes from '+t+': icmp_seq=2 ttl=64 time=0.98 ms','','--- '+t+' ping statistics ---','2 packets transmitted, 2 received, 0% packet loss'],260); return true; } out('ping: '+t+': Name or service not known','e'); return false; }
+async function doSsh(args){ const tgt=args.find(a=>/@/.test(a))||''; if(!/^msteele@10\.13\.37\.42$/.test(tgt)){ if(tgt){ out('ssh: connect to host '+tgt.split('@')[1]+' port 22: Connection refused','e'); } else out('usage: ssh user@host','e'); return false; }
+ out('The authenticity of host \'10.13.37.42 (10.13.37.42)\' can\'t be established.\nED25519 key fingerprint is SHA256:vL0ck3dM3m0ry/aGoldenSunRising.\nWarning: Permanently added \'10.13.37.42\' (ED25519) to the list of known hosts.','b');
+ return await new Promise(res=>{ let tries=0; const ask=()=>{ pending={secret:true,prompt:'msteele@10.13.37.42\'s password: ',cb:async v=>{ if(v===CRACKED){ ctx={host:'steele',user:'msteele',cwd:'/home/msteele'}; await lines(['Linux vault 5.10.0-8-amd64 #1 SMP x86_64','Last login: Tue Oct 14 03:05:11 1997 from 10.13.37.5'],150,'b'); setPrompt(); objDone('ssh'); res(true); } else { tries++; out('Permission denied, please try again.','e'); if(tries>=3){ out('msteele@10.13.37.42: Permission denied (publickey,password).','e'); res(false);} else ask(); } }}; showPending(); }; ask(); }); }
+async function doExit(){ if(ctx.host==='steele'){ out('logout\nConnection to 10.13.37.42 closed.','b'); ctx={host:'local',user:'locke',cwd:'/home/locke'}; setPrompt(); objDone('exit'); return true; } out('(There is nowhere to run. Keep going.)','w'); return true; }
+
+/* ============ stage 5 + finale ============ */
+async function stage5(){ term.innerHTML=''; ctx={host:'local',user:'locke',cwd:'/home/locke'}; setPrompt(); await sleep(600); out('LOCKE_PROTOCOL: UNLOCK?','m'); out('(type the command)','b'); stage5ready=true; }
+let stage5ready=false;
+
+const FIN=[
+ ['INT. PARKER DATALINK - MAIN ROOM - NIGHT','The terminal screen goes black. Then a single line appears:\nLOCKE_PROTOCOL: UNLOCK?'],
+ ['PARKER','What happens if you do?'],
+ ['LOCKE','We find out what Steele took.\nAnd why he wants it back.'],
+ ['PARKER','Then do it.'],
+ ['','He types: unlock\n\nThe screen explodes into golden light.'],
+ ['DIGITAL MEMORY FIELD - UNKNOWN','Locke, Parker, and Elara stand in a vast digital landscape. Golden grass made of code, sky rendered in soft gradients. The horizon curves. The world literally round.'],
+ ['PARKER','This is... this is inside the system.'],
+ ['','Locke kneels, touching the grass. It ripples like liquid data.'],
+ ['LOCKE','Feels real.'],['ELARA','It is real. Just forgotten.'],
+ ['CLIMAX','Above them, the golden circle appears, orbiting like a digital sun. It descends, surrounding Locke in a column of light.\nHe sees: Parker beside him. Elara reaching for him. Malcolm Steele watching from a distance. A past version of himself walking away. A broken promise. A moment of courage. A moment of fear.'],
+ ['LOCKE','I remember.\nAll of it.'],
+ ['','The circle pulses, then shatters into a thousand golden fragments. They drift upward, forming a glowing halo around the rising digital sun.'],
+ ['LOCKE','The world is round.\nAnd everything comes back around eventually.'],
+ ['ELARA','Even the things we thought were lost.'],
+ ['PARKER','Then let\'s walk it.'],
+ ['','The three step forward as the golden sun rises. Warm, infinite, pixelated.']
+];
+async function finale(){ $('#scene').classList.remove('on'); const fn=$('#finale'); fn.classList.add('on'); const cv=$('#fcv'), g=cv.getContext('2d'); const sub=$('#fsub'); function rs(){ cv.width=innerWidth; cv.height=innerHeight; } rs(); addEventListener('resize',rs);
+ let phase=0, t=0, run=true; const glyph='01'; const blades=[]; for(let i=0;i<420;i++) blades.push({x:Math.random(),y:Math.random(),p:Math.random()*6,s:8+Math.random()*10});
+ let sunY=.18, halo=0, frags=[], circle=0, black=1;
+ function frame(){ if(!run) return; t+=1; const W=cv.width,H=cv.height; g.clearRect(0,0,W,H);
+  if(phase<=1){ g.fillStyle='#000'; g.fillRect(0,0,W,H); if(phase===1){ g.fillStyle='rgba(255,210,74,'+Math.min(1,t/40)+')'; g.fillRect(0,0,W,H); } }
+  else { const sky=g.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#1a0f3a'); sky.addColorStop(.45,'#7a4a8f'); sky.addColorStop(.75,'#f2a65a'); sky.addColorStop(1,'#ffd24a'); g.fillStyle=sky; g.fillRect(0,0,W,H);
+   // round world horizon
+   g.save(); g.beginPath(); g.ellipse(W/2,H*1.9,W*1.15,H*1.25,0,Math.PI,2*Math.PI); g.closePath(); g.fillStyle='#8a5a12'; g.fill(); g.restore();
+   g.font='bold 14px monospace'; blades.forEach(b=>{ const gy=H*.6+ b.y*H*.4; const gx=b.x*W; const sway=Math.sin(t/20+b.p)*4; g.fillStyle='rgba(255,'+(190+Math.floor(b.y*50))+',60,'+(.35+b.y*.5)+')'; g.fillText(glyph[(Math.floor(b.p*10))%2], gx+sway, gy); });
+   // sun / circle
+   const cx=W/2, cy=H*(phase>=5?sunY:.2);
+   if(phase>=5&&phase<7){ g.strokeStyle='rgba(255,224,120,.95)'; g.lineWidth=6; g.beginPath(); g.arc(cx,cy,Math.min(W,H)*.07,0,7); g.stroke(); g.fillStyle='rgba(255,224,120,.12)'; g.fillRect(cx-30,cy,60,H); }
+   if(phase>=7){ frags.forEach(f=>{ f.x+=f.vx; f.y+=f.vy; g.fillStyle='rgba(255,224,120,'+f.a+')'; g.fillRect(f.x,f.y,4,4); }); const r=Math.min(W,H)*(.05+halo*.12); const gr=g.createRadialGradient(cx,cy,2,cx,cy,r*2.2); gr.addColorStop(0,'rgba(255,248,200,1)'); gr.addColorStop(.35,'rgba(255,215,90,.9)'); gr.addColorStop(1,'rgba(255,170,40,0)'); g.fillStyle=gr; g.beginPath(); g.arc(cx,cy,r*2.2,0,7); g.fill(); g.strokeStyle='rgba(255,240,170,'+(.4+halo*.5)+')'; g.lineWidth=5; g.beginPath(); g.arc(cx,cy,r*1.4,0,7); g.stroke(); if(phase>=8&&sunY>.3) sunY-=.0008; if(phase>=8) { sunY=Math.max(.2,sunY); } }
+  }
+  requestAnimationFrame(frame); }
+ requestAnimationFrame(frame);
+ const waitKey=()=>new Promise(res=>{ const h=e=>{ if(e.type==='click'||e.key==='Enter'||e.key===' '){ removeEventListener('keydown',h); fn.removeEventListener('click',h); res(); } }; addEventListener('keydown',h); fn.addEventListener('click',h); });
+ for(let i=0;i<FIN.length;i++){ const [who,text]=FIN[i]; if(i===4){ phase=1; t=0; } if(i===5){ phase=2; t=0; } if(i===10){ phase=5; } if(i===12){ phase=7; const cx=cv.width/2, cy=cv.height*.2; frags=[]; for(let k=0;k<160;k++){ const a=Math.random()*6.28, sp=1+Math.random()*3; frags.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:-Math.abs(Math.sin(a))*sp-.5,a:.3+Math.random()*.7}); } } if(i===13){ phase=8; } if(i>=13) halo=Math.min(1,halo+.4);
+  sub.innerHTML=(who?'<div style="color:#35e6ff;font-size:15px;letter-spacing:3px;margin-bottom:6px">'+who+'</div>':'')+text.replace(/\n/g,'<br>')+'<div style="font-size:12px;color:#c9b97a;margin-top:10px">[ENTER] to continue</div>'; await waitKey(); }
+ sub.innerHTML='<div style="font-size:30px;letter-spacing:6px;color:#fff3c4">FADE OUT.</div><div style="margin-top:12px">END OF CHAPTER ONE</div><div style="font-size:13px;color:#c9b97a;margin-top:14px">Thanks for playing. [ENTER] to play again</div>'; await waitKey(); run=false; location.reload(); }
+
+/* ============ input ============ */
+inp.addEventListener('keydown',async e=>{
+ if(e.key.length===1) click();
+ if(e.key==='Enter'){ const v=inp.value; inp.value=''; if(pending){ const p=pending; pending=null; inp.type='text'; out(p.prompt.split('\n').pop()+(p.secret?'':v)); promptEl.textContent=''; await p.cb(v); return; } if(busy) return; echoCmd(v); if(v.trim()) { hist.push(v); } hi=hist.length;
+   if(stage===4 && stage5ready){ if(v.trim()==='unlock'){ busy=true; done.unlock=true; renderObj(); await sleep(500); await finale(); return; } out('LOCKE_PROTOCOL: UNLOCK?  (hint: the command is on the screen)','m'); return; }
+   busy=true; try{ await run(v.trim()); }catch(err){ out('error: '+err.message,'e'); } busy=false; setPrompt(); inp.focus(); return; }
+ if(e.key==='ArrowUp'&&!pending){ if(hi>0){ hi--; inp.value=hist[hi]; } e.preventDefault(); }
+ if(e.key==='ArrowDown'&&!pending){ if(hi<hist.length-1){ hi++; inp.value=hist[hi]; } else { hi=hist.length; inp.value=''; } e.preventDefault(); }
+ if(e.key==='l'&&e.ctrlKey){ term.innerHTML=''; e.preventDefault(); }
+ if(e.key==='Tab'&&!pending){ e.preventDefault(); const v=inp.value; const sp=v.split(/\s+/); const last=sp[sp.length-1]; let cands=[]; if(sp.length===1) cands=CMDS.filter(c=>c.startsWith(last)); else { const dir=node(ctx.host,resolve(last.includes('/')?last.replace(/[^/]*$/,''):'.')); const base=last.replace(/^.*\//,''); if(dir&&dir.d) cands=Object.keys(dir.c).filter(c=>c.startsWith(base)).map(c=>(last.includes('/')?last.replace(/[^/]*$/,''):'')+c+(dir.c[c].d?'/':'')); } if(cands.length===1){ sp[sp.length-1]=cands[0]; inp.value=sp.join(' ')+(cands[0].endsWith('/')?'':' '); } else if(cands.length>1){ out(cands.join('  '),'b'); } }
+});
+document.addEventListener('click',()=>{ if(!$('#scene').classList.contains('on')&&!$('#finale').classList.contains('on')) inp.focus(); });
+$('#mbtn').onclick=()=>{ audioOn=!audioOn; $('#mbtn').textContent='SOUND: '+(audioOn?'ON':'OFF'); };
+$('#hbtn').onclick=()=>{ out('HINT: '+nextHint(),'w'); inp.focus(); };
+$('#go').onclick=async()=>{ $('#title').classList.remove('on'); renderPortraits(); busy=true; await intro(0); busy=false; setPrompt(); inp.focus(); };
+renderObj(); renderPortraits();
+</script>
+</body>
+</html>
